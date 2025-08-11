@@ -225,6 +225,11 @@
                 marketsContainer.querySelector('input[name="markets[]"]').value = '';
                 localStorage.removeItem('landSearchForm'); // Clear localStorage
             });
+
+            // Property Map button event listener
+            document.getElementById('propertyMapButton').addEventListener('click', () => {
+                window.open('https://jakepistone.github.io/NIOS-Land-Map/', '_blank');
+            });
         });
 
         // Add market input field
