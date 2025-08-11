@@ -85,28 +85,82 @@
 
                 <!-- Zoning Input -->
                 <div>
-                    <label for="zoning" class="block text-sm font-medium text-gray-700">Zoning Type</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Zoning Type</label>
+                    <div class="space-y-2">
+                        <div class="flex items-center">
+                            <input
+                                type="checkbox"
+                                id="zoningIndustrial"
+                                name="zoning[]"
+                                value="Industrial"
+                                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            >
+                            <label for="zoningIndustrial" class="ml-2 text-sm text-gray-700">Industrial</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input
+                                type="checkbox"
+                                id="zoningCommercial"
+                                name="zoning[]"
+                                value="Commercial"
+                                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            >
+                            <label for="zoningCommercial" class="ml-2 text-sm text-gray-700">Commercial</label>
+                        </div>
+                        <div class="flex items-center">
+                            <input
+                                type="checkbox"
+                                id="zoningManufacturing"
+                                name="zoning[]"
+                                value="Manufacturing"
+                                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            >
+                            <label for="zoningManufacturing" class="ml-2 text-sm text-gray-700">Manufacturing</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tenant Input -->
+                <div>
+                    <label for="tenant" class="block text-sm font-medium text-gray-700">Tenant</label>
                     <input
                         type="text"
-                        id="zoning"
-                        name="zoning"
-                        placeholder="Enter zoning (e.g., Industrial, I-1)"
+                        id="tenant"
+                        name="tenant"
+                        placeholder="Enter tenant (e.g., Company Name)"
                         class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                     >
                 </div>
 
-                <!-- Search Button -->
-                <div class="text-center">
+                <!-- Buttons -->
+                <div class="text-center flex justify-center space-x-4">
                     <button
                         type="submit"
                         class="inline-block bg-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-700 transition duration-300"
                     >
                         Search Land
                     </button>
+                    <button
+                        type="button"
+                        id="clearForm"
+                        class="inline-block bg-red-600 text-white px-6 py-3 rounded-md font-medium hover:bg-red-700 transition duration-300"
+                    >
+                        Clear
+                    </button>
                 </div>
             </form>
         </section>
     </main>
+
+    <!-- Property Map Button -->
+    <div class="fixed bottom-4 right-4">
+        <button
+            id="propertyMapButton"
+            class="bg-blue-600 text-white px-6 py-3 rounded-md font-medium hover:bg-blue-700 transition duration-300"
+        >
+            Click For Property Map
+        </button>
+    </div>
 
     <!-- Footer Section -->
     <footer class="bg-blue-900 text-white py-6 mt-12">
@@ -142,61 +196,34 @@
             });
         }
 
-        // Load saved form data from localStorage
+        // Clear localStorage on page load to ensure fresh form
         document.addEventListener('DOMContentLoaded', () => {
-            const savedData = JSON.parse(localStorage.getItem('landSearchForm')) || {};
+            localStorage.removeItem('landSearchForm'); // Clear saved form data
+
             const marketsContainer = document.getElementById('marketsContainer');
+            // Initialize autocomplete on the default market input
+            const defaultInput = marketsContainer.querySelector('input[name="markets[]"]');
+            initAutocomplete(defaultInput);
 
-            // Populate acres and acresOption
-            if (savedData.acres) {
-                document.getElementById('acres').value = savedData.acres;
-            }
-            if (savedData.acresOption) {
-                document.getElementById('acresOption').value = savedData.acresOption;
-            }
-
-            // Populate square footage
-            if (savedData.squareFootage) {
-                document.getElementById('squareFootage').value = savedData.squareFootage;
-            }
-
-            // Populate markets
-            if (savedData.markets && savedData.markets.length > 0) {
-                marketsContainer.innerHTML = ''; // Clear default field
-                savedData.markets.forEach((market, index) => {
-                    const newField = document.createElement('div');
-                    newField.classList.add('market-field', 'mt-4', 'flex', 'space-x-2');
-                    newField.innerHTML = `
-                        <input
-                            type="text"
-                            name="markets[]"
-                            placeholder="Enter city or region (e.g., Austin, TX)"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                            value="${market}"
-                        >
-                        ${index > 0 ? '<button type="button" class="removeMarket text-red-600 hover:text-red-800 font-medium text-sm px-4 py-2">Remove</button>' : ''}
-                    `;
-                    marketsContainer.appendChild(newField);
-                    // Initialize autocomplete on the new input
-                    const newInput = newField.querySelector('input[name="markets[]"]');
-                    initAutocomplete(newInput);
-                });
-            } else {
-                // Initialize on the default input if no saved markets
-                const defaultInput = marketsContainer.querySelector('input[name="markets[]"]');
-                initAutocomplete(defaultInput);
-            }
-
-            // Populate zoning
-            if (savedData.zoning) {
-                document.getElementById('zoning').value = savedData.zoning;
-            }
-
-            // Add event listener for remove buttons
+            // Add event listener for remove market buttons
             marketsContainer.addEventListener('click', (e) => {
                 if (e.target.classList.contains('removeMarket')) {
                     e.target.parentElement.remove();
                 }
+            });
+
+            // Clear form button event listener
+            document.getElementById('clearForm').addEventListener('click', () => {
+                const form = document.getElementById('landSearchForm');
+                form.reset(); // Reset all form inputs
+                // Clear market fields except the first one
+                const marketFields = marketsContainer.querySelectorAll('.market-field');
+                marketFields.forEach((field, index) => {
+                    if (index > 0) field.remove();
+                });
+                // Clear the first market input
+                marketsContainer.querySelector('input[name="markets[]"]').value = '';
+                localStorage.removeItem('landSearchForm'); // Clear localStorage
             });
         });
 
@@ -235,22 +262,36 @@
                 acresOption: document.getElementById('acresOption').value,
                 squareFootage: document.getElementById('squareFootage').value,
                 markets: Array.from(document.querySelectorAll('input[name="markets[]"]')).map(input => input.value).filter(val => val.trim() !== ''),
-                zoning: document.getElementById('zoning').value
+                zoning: Array.from(document.querySelectorAll('input[name="zoning[]"]:checked')).map(input => input.value),
+                tenant: document.getElementById('tenant').value
             };
 
-            // Save to localStorage (keeping your original logic)
+            // Create a detailed confirmation message
+            const zoningText = formData.zoning.length > 0 ? formData.zoning.join(", ") : "None";
+            const marketsText = formData.markets.length > 0 ? formData.markets.join(", ") : "None";
+            const confirmationMessage = `
+                Search request saved with the following details:
+                - Acres: ${formData.acres || "Not specified"} (${formData.acresOption})
+                - Square Footage: ${formData.squareFootage || "Not specified"}
+                - Markets: ${marketsText}
+                - Zoning Types: ${zoningText}
+                - Tenant: ${formData.tenant || "Not specified"}
+            `;
+
+            // Save to localStorage
             localStorage.setItem('landSearchForm', JSON.stringify(formData));
 
-            // Prepare data for POST (markets as array for Apps Script)
+            // Prepare data for POST, including tenant
             const postData = new URLSearchParams();
             postData.append('acres', formData.acres);
             postData.append('acresOption', formData.acresOption);
             postData.append('squareFootage', formData.squareFootage);
             formData.markets.forEach(market => postData.append('markets', market)); // Append each market separately
-            postData.append('zoning', formData.zoning);
+            postData.append('zoning', JSON.stringify(formData.zoning)); // Send zoning as JSON string
+            postData.append('tenant', formData.tenant); // Include tenant in the POST request
 
             // Send to Google Apps Script
-            fetch('https://script.google.com/macros/s/AKfycbz7SG2rWHmIL_N3wykHMcvJewyc4V31gnyiM1kxCft8Tf45g03T5pCmKkgf1g44VMRT/exec', {
+            fetch('https://script.google.com/macros/s/AKfycbxQUyDxHTtQ0KDisM_tpShf_ix0K2wkChrhnDeX3l8W20q80yaoOxpTvBUzvVob4bDk/exec', {
                 method: 'POST',
                 body: postData,
                 headers: {
@@ -260,11 +301,11 @@
             .then(response => response.text())
             .then(result => {
                 console.log(result);
-                alert('Search request saved and sent to Google Sheet!'); // Updated alert
+                alert(confirmationMessage + "\nData sent to Google Sheet!");
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Failed to send to Google Sheet. Data saved locally.');
+                alert(confirmationMessage + "\nFailed to send to Google Sheet. Data saved locally.");
             });
         });
     </script>
